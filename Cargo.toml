@@ -1,0 +1,22 @@
+# ProxyCast Workspace
+# 包含三个 crate:
+# - proxycast-core: 核心库（AI Provider、服务、数据库等）
+# - proxycast-api: 管理 API 层（HTTP 路由）
+# - proxycast-server: 独立服务器二进制
+
+[workspace]
+members = [
+    "crates/proxycast-core",
+    "crates/proxycast-api",
+    "crates/proxycast-server",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.20.1"
+edition = "2021"
+authors = ["ProxyCast Team"]
+repository = "https://github.com/aiclientproxy/proxycast"
+
+# 保留原有的 Tauri 应用配置（可选构建）
+# 如需构建 Tauri 桌面版，使用: cargo build -p proxycast --manifest-path src-tauri/Cargo.toml
