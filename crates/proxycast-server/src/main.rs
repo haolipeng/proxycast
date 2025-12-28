@@ -27,12 +27,12 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 #[command(author, version, about = "ProxyCast AI API Proxy Server", long_about = None)]
 struct Args {
     /// 监听地址
-    #[arg(short = 'H', long, default_value = "127.0.0.1")]
-    host: String,
+    #[arg(short = 'H', long)]
+    host: Option<String>,
 
     /// 监听端口
-    #[arg(short, long, default_value_t = 9090)]
-    port: u16,
+    #[arg(short, long)]
+    port: Option<u16>,
 
     /// 配置文件路径
     #[arg(short, long)]
@@ -80,9 +80,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         e
     })?;
 
-    // 命令行参数覆盖配置
-    config.server.host = args.host.clone();
-    config.server.port = args.port;
+    // 命令行参数覆盖配置（仅在显式指定时）
+    if let Some(host) = &args.host {
+        config.server.host = host.clone();
+    }
+    if let Some(port) = args.port {
+        config.server.port = port;
+    }
 
     // 安全检查
     validate_config(&config)?;
@@ -101,7 +105,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let token_cache = Arc::new(TokenCacheService::new());
 
     // 启动管理 API 服务器（包含静态文件服务和所有 API）
-    let management_port = args.management_port.unwrap_or(args.port);
+    let management_port = args.management_port.unwrap_or(config.server.port);
 
     // 创建管理 API 状态
     let management_state = ManagementState::new(config.clone(), db.clone())?;
@@ -118,7 +122,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = create_app(management_state, api_config);
 
     // 启动管理 API 服务器
-    let addr: SocketAddr = format!("{}:{}", args.host, management_port).parse()?;
+    let addr: SocketAddr = format!("{}:{}", config.server.host, management_port).parse()?;
 
     tracing::info!("Starting ProxyCast Server on {}", addr);
     if !args.no_static {
